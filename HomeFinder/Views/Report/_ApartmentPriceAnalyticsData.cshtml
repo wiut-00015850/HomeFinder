@@ -1,0 +1,19 @@
+@model HomeFinder.Models.Reports.ApartmentPriceAnalyticsReportVm
+@using System.Text.Json
+
+@{
+    var payload = new
+    {
+        labels = Model.PriceTrend.Select(t => t.Label).ToList(),
+        avgPrices = Model.PriceTrend.Select(t => t.AveragePrice).ToList()
+    };
+
+    var json = JsonSerializer.Serialize(payload);
+}
+
+<div id="chartBlock">
+    <canvas id="priceTrendChart" style="min-height: 320px;"></canvas>
+</div>
+
+<script id="jsonBlock" type="application/json">@Html.Raw(json)</script>
+

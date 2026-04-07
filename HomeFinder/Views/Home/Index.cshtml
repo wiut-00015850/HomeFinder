@@ -1,0 +1,342 @@
+@using System.Text.Json
+@model List<HomeFinder.Models.ApartmentViewModel>
+
+@{
+    ViewData["Title"] = "All Apartments";
+
+    string currentSort = ViewData["SortBy"]?.ToString() ?? "rating";
+
+    decimal? priceMin = (decimal?)ViewData["PriceMin"];
+    decimal? priceMax = (decimal?)ViewData["PriceMax"];
+
+    int? sizeMin = (int?)ViewData["SizeMin"];
+    int? sizeMax = (int?)ViewData["SizeMax"];
+
+    int? rooms = (int?)ViewData["Rooms"];
+
+    string city = ViewData["City"]?.ToString() ?? "";
+    string district = ViewData["District"]?.ToString() ?? "";
+    string address = ViewData["Address"]?.ToString() ?? "";
+
+    string alltext = ViewData["Alltext"]?.ToString() ?? "";
+}
+
+<div class="container mt-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>All Apartments</h2>
+    </div>
+
+    <div class="card mb-4 p-4">
+        <h5>🔍 Search and Filter</h5>
+
+        <form method="get" asp-action="Index" class="row g-3 mt-2">
+
+            <div class="col-md-2">
+                <label class="form-label">💰 Price (from)</label>
+                <input type="number" name="priceMin" class="form-control"
+                       value="@(priceMin?.ToString() ?? "")" />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">💰 Price (to)</label>
+                <input type="number" name="priceMax" class="form-control"
+                       value="@(priceMax?.ToString() ?? "")" />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">📐 Size (from)</label>
+                <input type="number" name="sizeMin" class="form-control"
+                       value="@(sizeMin?.ToString() ?? "")" />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">📐 Size (to)</label>
+                <input type="number" name="sizeMax" class="form-control"
+                       value="@(sizeMax?.ToString() ?? "")" />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">🚪 Rooms</label>
+                <select name="rooms" class="form-control">
+                    <option value="">Any</option>
+                    <option value="1" selected="@(rooms == 1)">1</option>
+                    <option value="2" selected="@(rooms == 2)">2</option>
+                    <option value="3" selected="@(rooms == 3)">3</option>
+                    <option value="4" selected="@(rooms == 4)">4+</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">🏙️ City</label>
+                <input type="text" name="city" class="form-control" value="@city" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">📍 District</label>
+                <input type="text" name="district" class="form-control" value="@district" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">🛣️ Street</label>
+                <input type="text" name="address" class="form-control" value="@address" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">🔄 Sort By</label>
+                <select name="sortBy" class="form-control">
+                    <option value="rating" selected="@(currentSort == "rating")">⭐ Rating (Highest)</option>
+                    <option value="rating_asc" selected="@(currentSort == "rating_asc")">⭐ Rating (Lowest)</option>
+                    <option value="price_asc" selected="@(currentSort == "price_asc")">💰 Cheapest</option>
+                    <option value="price_desc" selected="@(currentSort == "price_desc")">💰 Most Expensive</option>
+                    <option value="newest" selected="@(currentSort == "newest")">✨ Newest</option>
+                    <option value="reviews" selected="@(currentSort == "reviews")">💬 Most Reviewed</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Search text</label>
+                <input type="text" name="alltext" class="form-control" value="@alltext" />
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">🔍 Search</button>
+                <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">✖ Clear</a>
+            </div>
+
+        </form>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span>📍 Apartments Map</span>
+            <div>
+                <span class="text-muted small me-2">Draw an area on the map. Only the apartments inside will remain</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="clearMapArea" style="display:none;">Сбросить область</button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div id="apartmentsMap" style="width:100%; height:450px;"></div>
+        </div>
+    </div>
+
+    <div class="row">
+        @foreach (var apt in Model)
+        {
+            <div class="col-md-4 mb-4 apartment-card" data-apartment-id="@apt.ApartmentId">
+                <div class="card h-100 shadow-sm">
+
+                    @if (apt.PhotoPaths != null && apt.PhotoPaths.Any())
+                    {
+                        <img src="@Url.Content(apt.PhotoPaths.First())"
+                             class="card-img-top"
+                             style="height:200px; object-fit:cover;"
+                             onerror="this.style.display='none'; this.insertAdjacentHTML('afterend','<div class=&quot;bg-secondary text-white text-center&quot; style=&quot;height:200px; display:flex; align-items:center; justify-content:center;&quot;>No Photo</div>');" />
+                    }
+                    else
+                    {
+                        <div class="bg-secondary text-white text-center"
+                             style="height:200px; display:flex; align-items:center; justify-content:center;">
+                            No Photo
+                        </div>
+                    }
+
+                    <div class="card-body">
+
+                        <h5>@apt.StreetAddress @apt.BuildingNumber</h5>
+                        <p class="text-muted small">@apt.District, @apt.City</p>
+
+                        <span class="badge bg-success">
+                            @apt.Price.ToString("F0") UZS
+                        </span>
+
+                        <div class="mt-2">
+                            <span class="badge bg-info">📐 @apt.Size m²</span>
+                            <span class="badge bg-info">🚪 @apt.Rooms</span>
+                        </div>
+
+                        <p class="mt-2 small">
+                            @(apt.Description?.Length > 80
+                                ? apt.Description.Substring(0, 80) + "..."
+                                : apt.Description)
+                        </p>
+
+                        @if (apt.ReviewCount > 0)
+                        {
+                            <span class="badge bg-warning text-dark">
+                                ⭐ @apt.AverageRating.ToString("F1") (@apt.ReviewCount)
+                            </span>
+                        }
+
+                        <p class="mt-2 small">
+                            <strong>@apt.LandlordName</strong><br />
+                            📞 @apt.PhoneNumber
+                        </p>
+
+                        <a href="@Url.Action("Details", "Apartments", new { id = apt.ApartmentId })"
+                           class="btn btn-sm btn-primary w-100">
+                            View Details
+                        </a>
+
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info mt-4">
+            No apartments found.
+        </div>
+    }
+
+</div>
+
+@section Scripts {
+
+<form id="__af" method="post" style="display:none">
+    @Html.AntiForgeryToken()
+</form>
+
+<script>
+    const antiforgeryToken = document.querySelector('#__af input[name="__RequestVerificationToken"]')?.value;
+
+    const apartments = @Html.Raw(JsonSerializer.Serialize(
+        Model.Select(a => new {
+            id = a.ApartmentId,
+            lat = a.Latitude,
+            lng = a.Longitude,
+            address = $"{a.StreetAddress} {a.BuildingNumber}",
+            price = a.Price,
+            detailsUrl = Url.Action("Details", "Apartments", new { id = a.ApartmentId })
+        })
+    ));
+
+    let defaultLat = 41.311081;
+    let defaultLng = 69.240562;
+
+    const first = apartments.find(x => x.lat && x.lng);
+    if (first) {
+        defaultLat = first.lat;
+        defaultLng = first.lng;
+    }
+
+    const map = L.map("apartmentsMap").setView([defaultLat, defaultLng], 12);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19
+    }).addTo(map);
+
+    // Текущие маркеры квартир храним в массиве
+    const apartmentMarkers = [];
+
+    function clearMarkers() {
+        apartmentMarkers.forEach(item => {
+            map.removeLayer(item.marker);
+        });
+        apartmentMarkers.length = 0;
+    }
+
+    function renderMarkers(source) {
+        source.forEach(a => {
+            if (!a.lat || !a.lng) return;
+
+            const marker = L.marker([a.lat, a.lng]).addTo(map);
+            marker.bindPopup(`
+                <strong>${a.address}</strong><br/>
+                <span style="color:green; font-weight:bold;">
+                    ${a.price.toLocaleString()} UZS
+                </span><br/>
+                <a href="${a.detailsUrl}">Open details</a>
+            `);
+            apartmentMarkers.push({ marker, lat: a.lat, lng: a.lng });
+        });
+    }
+
+    // начальная отрисовка всех квартир
+    renderMarkers(apartments);
+
+    // --- Связь карты и списка карточек ниже ---
+    function filterCardsByIds(ids) {
+        const idSet = new Set(ids || []);
+        const cards = document.querySelectorAll('.apartment-card[data-apartment-id]');
+        cards.forEach(card => {
+            const id = parseInt(card.dataset.apartmentId, 10);
+            if (!ids || ids.length === 0 || idSet.has(id)) {
+                card.classList.remove('d-none');
+            } else {
+                card.classList.add('d-none');
+            }
+        });
+    }
+
+    function showAllCards() {
+        filterCardsByIds(null);
+    }
+
+    // Слой нарисованных областей (при перерисовке очищаем — остаётся только новая)
+    const drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+
+    // Панель рисования: только прямоугольник и полигон
+    const drawControl = new L.Control.Draw({
+        edit: { featureGroup: drawnItems },
+        draw: {
+            polygon: { shapeOptions: { color: '#3388ff' }, allowIntersection: false },
+            rectangle: { shapeOptions: { color: '#3388ff' } },
+            circle: false,
+            marker: false,
+            polyline: false,
+            circlemarker: false
+        }
+    });
+    map.addControl(drawControl);
+
+    map.on(L.Draw.Event.CREATED, function (e) {
+        drawnItems.clearLayers();
+        const layer = e.layer;
+        drawnItems.addLayer(layer);
+
+        // Преобразуем фигуру (прямоугольник/полигон) в массив точек полигона
+        let latLngs = layer.getLatLngs();
+        if (Array.isArray(latLngs[0])) {
+            latLngs = latLngs[0];
+        }
+
+        const polygon = latLngs.map(ll => ({
+            lat: ll.lat,
+            lng: ll.lng
+        }));
+
+        fetch('@Url.Action("FilterByArea", "Home")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(antiforgeryToken ? { 'RequestVerificationToken': antiforgeryToken } : {})
+            },
+            body: JSON.stringify({ polygon })
+        })
+            .then(r => r.ok ? r.json() : Promise.reject(r))
+            .then(data => {
+                clearMarkers();
+                renderMarkers(data);
+                const ids = data.map(a => a.id);
+                filterCardsByIds(ids);
+                document.getElementById('clearMapArea').style.display = 'inline-block';
+            })
+            .catch(err => {
+                console.error('FilterByArea error', err);
+            });
+    });
+
+    document.getElementById('clearMapArea').addEventListener('click', function () {
+        drawnItems.clearLayers();
+        clearMarkers();
+        renderMarkers(apartments);
+        showAllCards();
+        this.style.display = 'none';
+    });
+</script>
+
+}

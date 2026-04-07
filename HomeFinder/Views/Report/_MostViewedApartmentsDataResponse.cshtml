@@ -1,0 +1,6 @@
+@model HomeFinder.Models.Reports.MostViewedApartmentsReportVm
+@{ Layout = null; }
+@await Html.PartialAsync("_MostViewedApartmentsData", Model)
+<div id="tableBlock">
+    @await Html.PartialAsync("_MostViewedApartmentsTable", Model)
+</div>

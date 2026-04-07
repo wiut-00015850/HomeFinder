@@ -1,0 +1,9 @@
+@model HomeFinder.Models.Reports.ApartmentPriceAnalyticsReportVm
+@{ Layout = null; }
+
+@await Html.PartialAsync("_ApartmentPriceAnalyticsData", Model)
+
+<div id="tableBlock">
+    @await Html.PartialAsync("_ApartmentPriceAnalyticsByDistrictTable", Model)
+</div>
+

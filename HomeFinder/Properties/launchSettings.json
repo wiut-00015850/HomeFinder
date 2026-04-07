@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5222",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DOTNET_WATCH_SUPPRESS_BROWSER_REFRESH": "1"
+      }
+    },
+    "https": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:7020;http://localhost:5222",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DOTNET_WATCH_SUPPRESS_BROWSER_REFRESH": "1"
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+@model HomeFinder.Models.Reports.MostActiveTenantsReportVm
+
+<div id="tableBlock">
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>Tenant</th>
+                    <th class="text-end">Login count</th>
+                    <th class="text-end">Last login</th>
+                    <th class="text-end">Appointment count</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items == null || Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">No data found for selected period.</td>
+                    </tr>
+                }
+                else
+                {
+                @foreach (var x in Model.Items)
+                {
+                    var tenantTitle = !string.IsNullOrWhiteSpace(x.TenantName) ? x.TenantName : x.Login;
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">@tenantTitle</div>
+                            <div class="text-muted small">@x.Login</div>
+                        </td>
+                        <td class="text-end fw-semibold">@x.LoginCount</td>
+                        <td class="text-end">
+                            @(x.LastLoginTime.HasValue ? x.LastLoginTime.Value.ToString("dd.MM.yyyy HH:mm") : "—")
+                        </td>
+                        <td class="text-end fw-semibold">@x.AppointmentCount</td>
+                    </tr>
+                }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+

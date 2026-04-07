@@ -1,0 +1,25 @@
+@model HomeFinder.Models.Reports.MostViewedDistrictsReportVm
+
+<div id="tableBlock">
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>District</th>
+                    <th class="text-end">Total views</th>
+                    <th class="text-end">Apts</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var x in Model.Items)
+                {
+                    <tr>
+                        <td>@x.District</td>
+                        <td class="text-end fw-semibold">@x.TotalViews</td>
+                        <td class="text-end">@x.ApartmentsCount</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

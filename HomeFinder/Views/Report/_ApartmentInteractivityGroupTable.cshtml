@@ -1,0 +1,41 @@
+@model List<HomeFinder.Models.Reports.ApartmentInteractivityReportVm.GroupRow>
+@using System.Globalization
+
+@{
+    var inv = CultureInfo.InvariantCulture;
+    string pct(double v) => (v * 100).ToString("0.##", inv) + "%";
+}
+
+@if (Model == null || Model.Count == 0)
+{
+    <div class="text-muted">No data found.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm mb-0">
+            <thead>
+                <tr>
+                    <th>Group</th>
+                    <th class="text-end">Listings</th>
+                    <th class="text-end">Views</th>
+                    <th class="text-end">Appointments</th>
+                    <th class="text-end">Conversion</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var r in Model.Take(10))
+            {
+                <tr>
+                    <td>@r.Key</td>
+                    <td class="text-end">@r.ApartmentsCount</td>
+                    <td class="text-end">@r.Views</td>
+                    <td class="text-end">@r.Inquiries</td>
+                    <td class="text-end fw-semibold">@pct(r.ConversionRate)</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+

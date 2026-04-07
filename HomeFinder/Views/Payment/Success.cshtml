@@ -1,0 +1,14 @@
+﻿@model string
+@{
+    ViewData["Title"] = "Payment success";
+}
+
+<div class="container py-5">
+    <div class="alert alert-success">
+        Subscription activated. Session: @Model
+    </div>
+
+    <a class="btn btn-outline-primary" asp-controller="Home" asp-action="Index">
+        Back to catalog
+    </a>
+</div>

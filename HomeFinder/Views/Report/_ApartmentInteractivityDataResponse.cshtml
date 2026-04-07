@@ -1,0 +1,141 @@
+@model HomeFinder.Models.Reports.ApartmentInteractivityReportVm
+@using System.Globalization
+
+@{
+    var inv = CultureInfo.InvariantCulture;
+    string pct(double v) => (v * 100).ToString("0.##", inv) + "%";
+}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <ul class="nav nav-tabs" id="interactivityTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active"
+                        id="tab-top"
+                        data-bs-toggle="tab"
+                        data-bs-target="#tab-top-pane"
+                        type="button"
+                        role="tab"
+                        aria-controls="tab-top-pane"
+                        aria-selected="true">
+                    Top listings
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link"
+                        id="tab-compare"
+                        data-bs-toggle="tab"
+                        data-bs-target="#tab-compare-pane"
+                        type="button"
+                        role="tab"
+                        aria-controls="tab-compare-pane"
+                        aria-selected="false">
+                    Comparisons
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content pt-3" id="interactivityTabContent">
+            <div class="tab-pane fade show active" id="tab-top-pane" role="tabpanel" aria-labelledby="tab-top" tabindex="0">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h5 class="mb-0">Top listings by conversion</h5>
+                    <div class="text-muted small">minimum 10 views for sorting</div>
+                </div>
+
+                @if (Model.Items.Count == 0)
+                {
+                    <div class="alert alert-info mb-0">No data found for selected period.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Listing</th>
+                                    <th class="text-end">Views</th>
+                                    <th class="text-end">Appointments</th>
+                                    <th class="text-end">Convresion</th>
+                                    <th class="text-end">Favorites</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @{
+                                var i = 0;
+                            }
+                            @foreach (var r in Model.Items)
+                            {
+                                i++;
+                                <tr>
+                                    <td>@i</td>
+                                    <td>
+                                        <div class="d-flex gap-2 align-items-center">
+                                            @if (!string.IsNullOrWhiteSpace(r.PhotoPath))
+                                            {
+                                                <img src="@r.PhotoPath" style="width:44px;height:44px;object-fit:cover;border-radius:8px;" />
+                                            }
+                                            <div>
+                                                <div class="fw-semibold">
+                                                    <a href="@r.DetailsUrl">#@r.ApartmentId</a>
+                                                    @if (r.Price.HasValue)
+                                                    {
+                                                        <span class="text-muted">· @r.Price.Value.ToString("n0", inv)</span>
+                                                    }
+                                                </div>
+                                                <div class="text-muted small">
+                                                    @(string.IsNullOrWhiteSpace(r.District) ? "" : r.District)
+                                                    @if (!string.IsNullOrWhiteSpace(r.StreetAddress))
+                                                    {
+                                                        <span>· @r.StreetAddress @r.BuildingNumber</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-end">@r.Views</td>
+                                    <td class="text-end">@r.Inquiries</td>
+                                    <td class="text-end fw-semibold">@pct(r.ConversionRate)</td>
+                                    <td class="text-end">@r.FavoritesTotal</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+
+            <div class="tab-pane fade" id="tab-compare-pane" role="tabpanel" aria-labelledby="tab-compare" tabindex="0">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h5 class="mb-2">Comparison by price ranges</h5>
+                                @await Html.PartialAsync("_ApartmentInteractivityGroupTable", Model.ByPriceRange)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h5 class="mb-2">Comparison by district</h5>
+                                @await Html.PartialAsync("_ApartmentInteractivityGroupTable", Model.ByDistrict)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h5 class="mb-2">Comparison by number of rooms</h5>
+                                @await Html.PartialAsync("_ApartmentInteractivityGroupTable", Model.ByRooms)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

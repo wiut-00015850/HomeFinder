@@ -1,0 +1,23 @@
+@model HomeFinder.Models.Reports.MostViewedApartmentsReportVm
+@using System.Text.Json
+
+@{
+    var payload = new
+    {
+        items = Model.Items.Select(x => new
+        {
+            apartmentId = x.ApartmentId,
+            views = x.Views,
+            district = x.District,
+            price = x.Price
+        }).ToList()
+    };
+
+    var json = JsonSerializer.Serialize(payload);
+}
+
+<div id="chartBlock">
+    <canvas id="viewsChart" style="min-height: 320px;"></canvas>
+</div>
+
+<script id="jsonBlock" type="application/json">@Html.Raw(json)</script>

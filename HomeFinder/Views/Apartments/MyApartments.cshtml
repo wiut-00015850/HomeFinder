@@ -1,0 +1,86 @@
+﻿@model List<HomeFinder.Models.ApartmentViewModel>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>My Apartments</h2>
+
+    <div>
+        @if (ViewBag.CanAddApartment == true)
+        {
+            <a asp-controller="Apartments"
+               asp-action="Create"
+               class="btn btn-success">
+                ➕ Add Apartment
+            </a>
+        }
+        else
+        {
+            <span class="text-muted">
+                To add more than 1 apartment, upgrade to
+                <a href="/Payment/Premium"
+                   class="fw-bold text-warning text-decoration-none">
+                    Premium
+                </a>
+            </span>
+        }
+
+        <a href="@Url.Action("Logout", "Account")"
+           class="btn btn-danger ms-2">
+            Logout
+        </a>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Address</th>
+                <th>Description</th>
+                <th>Reviews</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var apt in Model)
+            {
+                <tr>
+                    <td>
+                        <strong>@apt.StreetAddress @apt.BuildingNumber</strong>
+                        <br />
+                        <small class="text-muted">@apt.District, @apt.City</small>
+                        @if (apt.PhotoPaths.Any())
+                        {
+                            <div class="mt-2">
+                                <img src="@Url.Content(apt.PhotoPaths.First())"
+                                     width="120"
+                                     class="img-thumbnail"
+                                     onerror="this.closest('.mt-2')?.remove();" />
+                            </div>
+                        }
+                    </td>
+                    <td>@apt.Description?.Substring(0, Math.Min(50, apt.Description?.Length ?? 0))...</td>
+                    <td>@apt.ReviewCount reviews</td>
+                    <td>
+                        <a href="@Url.Action("Edit", "Apartments", new { id = apt.ApartmentId })"
+                           class="btn btn-sm btn-warning">✏️ Edit</a>
+                        <form asp-action="Delete" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@apt.ApartmentId" />
+                            <button type="submit"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Delete this apartment?')">
+                                🗑 Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="alert alert-info">You have no published apartments</div>
+}
+</div>

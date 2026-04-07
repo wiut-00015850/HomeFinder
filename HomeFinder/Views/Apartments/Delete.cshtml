@@ -1,0 +1,25 @@
+﻿@model HomeFinder.Models.Apartment
+
+@{
+    ViewData["Title"] = "Delete Apartment";
+}
+
+<h2>Delete Apartment</h2>
+
+<p>Are you sure you want to delete this apartment?</p>
+
+<p>
+    <strong>@Model.Description</strong>
+</p>
+
+<form asp-action="Delete" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="ApartmentId" />
+
+    <button type="submit" class="btn btn-danger">
+        Delete
+    </button>
+    <a asp-action="MyApartments" class="btn btn-secondary">
+        Cancel
+    </a>
+</form>

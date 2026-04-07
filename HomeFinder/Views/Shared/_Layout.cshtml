@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Home Finder</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/HomeFinder.styles.css" asp-append-version="true" />
+
+    <!-- LEAFLET CSS -->
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin="" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" crossorigin="" />
+
+    <style>
+        /* ✅ Compact and thin footer */
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            flex: 1;
+        }
+
+        footer {
+            background-color: #f8f9fa !important;
+            border-top: 1px solid #dee2e6;
+            margin-top: auto;
+            padding: 1.5rem 0 !important;
+        }
+
+            footer .row {
+                margin-bottom: 0.5rem;
+            }
+
+            footer h6 {
+                font-size: 0.875rem;
+                margin-bottom: 0.5rem;
+                font-weight: 600;
+            }
+
+            footer .small {
+                font-size: 0.8125rem;
+                line-height: 1.4;
+            }
+
+            footer ul.list-unstyled li {
+                margin-bottom: 0.25rem;
+            }
+
+            footer hr {
+                margin: 0.75rem 0;
+                border: none;
+                border-top: 1px solid #dee2e6;
+            }
+
+            footer .text-center {
+                font-size: 0.75rem;
+                color: #6c757d;
+            }
+
+            footer a {
+                color: #6c757d;
+                transition: color 0.2s;
+            }
+
+                footer a:hover {
+                    color: #495057;
+                }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    🏠 Home Finder
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        @{
+                            string userRole = Context.Session.GetString("UserRole");
+                            bool isLoggedIn = !string.IsNullOrEmpty(userRole);
+                        }
+
+                        <!-- COMMON TABS -->
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">
+                                📋 Catalog
+                            </a>
+                        </li>
+                        @if (isLoggedIn && (userRole == "Landlord" || userRole == "Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Report" asp-action="Index">
+                                    📈 Reports
+                                </a>
+                            </li>
+                        }
+
+                        @if (isLoggedIn)
+                        {
+                            @if (userRole == "Tenant")
+                            {
+                                <!-- TABS FOR TENANT -->
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Appointments" asp-action="MyAppointments">
+                                        📅 My Appointments
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Favorites" asp-action="MyFavorites">
+                                        ❤️ Favorites
+                                    </a>
+                                </li>
+                            }
+                            else if (userRole == "Landlord")
+                            {
+                                <!-- TABS FOR LANDLORD -->
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Apartments" asp-action="MyApartments">
+                                        📊 My Listings
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Appointments" asp-action="MyAppointments">
+                                        📅 Appointments
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Payment" asp-action="Premium">
+                                        💰 Subscribe
+                                    </a>
+                                </li>
+                            }
+                        }
+                    </ul>
+
+                    <!-- RIGHT SIDE: PREMIUM BADGE + LOGOUT / LOGIN -->
+                    <ul class="navbar-nav ms-auto align-items-center">
+                        @{
+                            var isPremium = Context.Session.GetString("IsPremium") == "1";
+                        }
+                        @if (isPremium)
+                        {
+                            <li class="nav-item me-2">
+                                <span class="badge rounded-pill text-bg-warning">⭐ Premium</span>
+                            </li>
+                        }
+                        @if (isLoggedIn)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-danger fw-bold" asp-controller="Account" asp-action="Logout">
+                                    Logout
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link btn btn-primary text-white ms-2" asp-controller="Account" asp-action="Login">
+                                    🔓 Sign In
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- ✅ COMPACT FOOTER -->
+    <footer class="border-top text-muted">
+        <div class="container-fluid px-4">
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <h6 class="fw-bold">🏠 Home Finder</h6>
+                    <p class="small mb-0">Find your ideal apartment</p>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="fw-bold">📋 Links</h6>
+                    <ul class="list-unstyled small mb-0">
+                        <li><a href="@Url.Action("Index", "Home")" class="text-decoration-none text-muted">Home</a></li>
+                        <li><a href="@Url.Action("Index", "Home")" class="text-decoration-none text-muted">Catalog</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="fw-bold">📞 Contacts</h6>
+                    <p class="small mb-0">Email: info@homefinder.uz</p>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="fw-bold">ℹ️ Information</h6>
+                    <ul class="list-unstyled small mb-0">
+                        <li><a href="#" class="text-decoration-none text-muted">About Us</a></li>
+                        <li><a asp-controller="Home" asp-action="Privacy" class="text-decoration-none text-muted">Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-2" />
+            <div class="text-center small">
+                &copy; 2025 - HomeFinder |
+                <a asp-controller="Home" asp-action="Privacy" class="text-decoration-none text-muted">Privacy Policy</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- LEAFLET JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js" crossorigin=""></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

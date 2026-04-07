@@ -1,0 +1,77 @@
+@model HomeFinder.Models.Reports.ApartmentInteractivityReportVm
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Apartment interactivity";
+    var inv = CultureInfo.InvariantCulture;
+    string fmtDate(DateTime d) => d.ToString("dd.MM.yyyy", inv);
+}
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h2 class="mb-1">💬 Listings interactivity</h2>
+            <!--<div class="text-muted">
+                Views = <code>ApartmentViewLogs</code>, contacts = <code>Appointments</code> for period.
+                Favourites (<code>Favorites</code>) - only common counter (в таблице нет даты).
+            </div>-->
+        </div>
+        <a class="btn btn-outline-secondary" asp-controller="Report" asp-action="Index">Back</a>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form id="filterForm" class="row g-2 align-items-end">
+                <div class="col-sm-2">
+                    <label class="form-label">Top</label>
+                    <input class="form-control" type="number" name="top" min="1" max="50" value="@Model.Top" />
+                </div>
+                <div class="col-sm-2">
+                    <label class="form-label">Date from</label>
+                    <input class="form-control" type="text" name="dateFrom" value="@fmtDate(Model.DateFrom)" />
+                </div>
+                <div class="col-sm-2">
+                    <label class="form-label">Date to</label>
+                    <input class="form-control" type="text" name="dateTo" value="@fmtDate(Model.DateTo)" />
+                </div>
+                <div class="col-sm-2">
+                    <label class="form-label">Price from</label>
+                    <input class="form-control" type="number" name="priceMin" value="@(Model.PriceMin?.ToString(inv) ?? "")" />
+                </div>
+                <div class="col-sm-2">
+                    <label class="form-label">Price to</label>
+                    <input class="form-control" type="number" name="priceMax" value="@(Model.PriceMax?.ToString(inv) ?? "")" />
+                </div>
+                <div class="col-sm-2">
+                    <label class="form-label">Price range step</label>
+                    <input class="form-control" type="number" name="priceBucketSize" value="@Model.PriceBucketSize.ToString(inv)" />
+                </div>
+                <div class="col-12 d-flex gap-2 mt-2">
+                    <button class="btn btn-primary" type="submit">Update</button>
+                    <!--<div class="text-muted small align-self-center">Date format: dd.MM.yyyy</div>-->
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="reportData">
+        @await Html.PartialAsync("_ApartmentInteractivityDataResponse", Model)
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const form = document.getElementById('filterForm');
+    const target = document.getElementById('reportData');
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const params = new URLSearchParams(new FormData(form));
+        fetch('@Url.Action("ApartmentInteractivityData", "Report")' + '?' + params.toString())
+            .then(r => r.ok ? r.text() : Promise.reject(r))
+            .then(html => { target.innerHTML = html; })
+            .catch(err => console.error('ApartmentInteractivity error', err));
+    });
+</script>
+}
+

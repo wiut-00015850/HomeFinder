@@ -1,0 +1,36 @@
+@model HomeFinder.Models.Reports.ApartmentPriceAnalyticsReportVm
+@using System.Globalization
+
+@{
+    var inv = CultureInfo.InvariantCulture;
+}
+
+@if (Model.AverageByDistrict == null || Model.AverageByDistrict.Count == 0)
+{
+    <div class="alert alert-info mb-0">No data found for selected period.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>District</th>
+                    <th class="text-end">Average price</th>
+                    <th class="text-end">Number of apartments</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var r in Model.AverageByDistrict)
+            {
+                <tr>
+                    <td>@r.District</td>
+                    <td class="text-end">@r.AveragePrice.ToString("n0", inv)</td>
+                    <td class="text-end">@r.ApartmentsCount</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+

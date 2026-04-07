@@ -1,0 +1,62 @@
+@model List<HomeFinder.Models.ApartmentViewModel>
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Admin Panel</h2>
+    </div>
+
+    <h3>All Apartments in the System</h3>
+
+    @if (Model.Any())
+    {
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Address</th>
+                    <th>Owner</th>
+                    <th>Phone</th>
+                    <th>Reviews</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var apt in Model)
+                {
+                    <tr>
+                        <td>@apt.ApartmentId</td>
+                        <td>
+                            <strong>@apt.StreetAddress @apt.BuildingNumber</strong>
+                            <br />
+                            <small class="text-muted">@apt.District, @apt.City</small>
+                        </td>
+                        <td>@apt.LandlordName</td>
+                        <td><a href="tel:@apt.PhoneNumber">@apt.PhoneNumber</a></td>
+                        <td>@apt.ReviewCount</td>
+                        <td>
+                            <form asp-controller="Admin"
+                                  asp-action="DeleteApartment"
+                                  method="post"
+                                  class="d-inline">
+
+                                @Html.AntiForgeryToken()
+
+                                <input type="hidden" name="id" value="@apt.ApartmentId" />
+
+                                <button type="submit"
+                                        class="btn btn-danger btn-sm"
+                                        onclick="return confirm('Are you sure you want to delete this apartment?')">
+                                    🗑 Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-warning">No apartments found</div>
+    }
+</div>

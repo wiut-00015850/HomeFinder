@@ -1,0 +1,137 @@
+﻿@model List<HomeFinder.Models.ApartmentViewModel>
+@{
+    ViewData["Title"] = "My Favorite Apartments";
+}
+
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>❤️ My Favorite Apartments</h2>
+            <p class="text-muted">Total added: <span class="badge bg-primary">@Model.Count</span></p>
+        </div>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading">📭 Empty!</h4>
+            <p>You have no favorite apartments. <a asp-controller="Home" asp-action="Index" class="alert-link">Start searching!</a></p>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var apartment in Model)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm" style="transition: transform 0.2s, box-shadow 0.2s;">
+                        <!-- PHOTO -->
+                        <div style="position: relative; height: 250px; overflow: hidden; background-color: #e9ecef;">
+                            @if (apartment.PhotoPaths.Any())
+                            {
+                                <img src="@apartment.PhotoPaths.First()" class="card-img-top" alt="Photo" style="height: 100%; object-fit: cover; width: 100%;">
+                            }
+                            else
+                            {
+                                <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-secondary text-white">
+                                    <span>📷 No Photo</span>
+                                </div>
+                            }
+
+                            <!-- RATING IN CORNER -->
+                            <div style="position: absolute; top: 10px; right: 10px; background-color: rgba(0,0,0,0.8); color: white; padding: 5px 12px; border-radius: 20px; font-size: 14px; font-weight: bold;">
+                                ⭐️ @(apartment.ReviewCount > 0 ? apartment.AverageRating.ToString("F1") : "—")
+                                <span style="font-size: 12px;">(@apartment.ReviewCount)</span>
+                            </div>
+
+                            <!-- REMOVE FROM FAVORITES BUTTON -->
+                            <form asp-controller="Favorites" asp-action="RemoveFromFavorites" method="post" style="position: absolute; top: 10px; left: 10px;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="apartmentId" value="@apartment.ApartmentId" />
+                                <button type="submit" class="btn btn-danger btn-sm" title="Remove from favorites" style="border-radius: 20px;">
+                                    💔 Remove
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- INFORMATION -->
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title" style="font-size: 18px; margin-bottom: 5px;">
+                                @apartment.StreetAddress, @apartment.BuildingNumber
+                            </h5>
+                            <p class="text-muted small" style="margin-bottom: 15px;">
+                                @apartment.District, @apartment.City
+                            </p>
+
+                            <!-- PARAMETERS -->
+                            <div class="row text-center my-3 border-top border-bottom py-3">
+                                <div class="col-4">
+                                    <small class="text-muted d-block">Size</small>
+                                    <div class="fw-bold">@apartment.Size m²</div>
+                                </div>
+                                <div class="col-4 border-start border-end">
+                                    <small class="text-muted d-block">Rooms</small>
+                                    <div class="fw-bold">@apartment.Rooms</div>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted d-block">Price/month</small>
+                                    <div class="fw-bold text-success">@apartment.Price.ToString("F0") ₽</div>
+                                </div>
+                            </div>
+
+                            <!-- DESCRIPTION -->
+                            <p class="card-text small text-muted flex-grow-1" style="font-size: 13px;">
+                                @{
+                                    var desc = apartment.Description ?? "Description not available";
+                                    if (desc.Length > 80)
+                                    {
+                                        @(desc.Substring(0, 80) + "...")
+                                    }
+                                    else
+                                    {
+                                        @desc
+                                    }
+                                }
+                            </p>
+
+                            <!-- OWNER -->
+                            <div class="border-top pt-3 mb-3">
+                                <small class="text-muted d-block">👤 Owner</small>
+                                <div>
+                                    <strong>@apartment.LandlordName</strong>
+                                    <br />
+                                    <a href="tel:@apartment.PhoneNumber" class="text-decoration-none text-primary fw-bold">
+                                        📞 @apartment.PhoneNumber
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- BUTTONS -->
+                            <div class="d-grid gap-2">
+                                <a asp-controller="Home" asp-action="Details" asp-route-id="@apartment.ApartmentId" class="btn btn-primary btn-sm">
+                                    👁️ View Details
+                                </a>
+                                <a href="tel:@apartment.PhoneNumber" class="btn btn-outline-warning btn-sm">
+                                    📞 Call
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="mt-5 mb-5">
+        <a href="@Url.Action("Index", "Home")" class="btn btn-secondary btn-lg">
+            ← Back to Search
+        </a>
+    </div>
+</div>
+
+<style>
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+    }
+</style>

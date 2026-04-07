@@ -1,0 +1,101 @@
+@model List<HomeFinder.Models.Appointment>
+@{
+    ViewData["Title"] = "My Appointments";
+}
+
+<div class="container mt-5">
+    <h2>📅 My Apartment Appointments</h2>
+
+    @if (Model?.Count > 0)
+    {
+        <div class="row mt-4">
+            @foreach (var appointment in Model)
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="card-title mb-1">
+                                        @if (appointment.Apartment != null)
+                                        {
+                                            <span>🏠 @appointment.Apartment.Description</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Apartment #@appointment.ApartmentId</span>
+                                        }
+                                    </h5>
+                                    <p class="text-muted small">
+                                        @if (appointment.Address != null)
+                                        {
+                                            <span>
+                                                @appointment.Address.StreetAddress,
+                                                @appointment.Address.BuildingNumber
+                                                <br />
+                                                @appointment.Address.City, @appointment.Address.District
+                                            </span>
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <p class="card-text mb-2">
+                                    <strong>📅 Appointment Date:</strong>
+                                </p>
+                                <p class="card-text">
+                                    @if (appointment.DateTime.HasValue)
+                                    {
+                                        <span>@appointment.DateTime.Value.ToString("dd.MM.yyyy HH:mm")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Not specified</span>
+                                    }
+                                </p>
+                            </div>
+
+                            <div class="mt-3">
+                                @if (appointment.DateTime.HasValue && appointment.DateTime.Value > DateTime.Now)
+                                {
+                                    <form method="post" asp-action="CancelAppointment" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@appointment.AppointmentId" />
+                                        <button type="submit" class="btn btn-sm btn-danger"
+                                                onclick="return confirm('Cancel this appointment?')">
+                                            ❌ Cancel Appointment
+                                        </button>
+                                    </form>
+                                }
+                                else if (appointment.DateTime.HasValue && appointment.DateTime.Value <= DateTime.Now)
+                                {
+                                    <span class="badge bg-secondary">✓ Appointment Completed</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning">⏳ Pending</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info mt-4">
+            <p>📭 You have no scheduled appointments.</p>
+            <p>
+                <a href="@Url.Action("Index", "Home")" class="btn btn-primary btn-sm">
+                    Find an apartment and book →
+                </a>
+            </p>
+        </div>
+    }
+
+    <div class="mt-4">
+        <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">← Back to Home</a>
+    </div>
+</div>

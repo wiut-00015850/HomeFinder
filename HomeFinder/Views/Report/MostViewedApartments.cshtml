@@ -1,0 +1,323 @@
+@model HomeFinder.Models.Reports.MostViewedApartmentsReportVm
+
+@{
+    ViewData["Title"] = "Most viewed apartments";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h2 class="mb-1">🔥 Most viewed apartments</h2>
+            <div id="reportPeriod" class="text-muted">
+                Топ @Model.Top by views (from @Model.DateFrom.ToString("dd.MM.yyyy") to @Model.DateTo.ToString("dd.MM.yyyy"))
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body d-flex flex-wrap align-items-end gap-2">
+            <div>
+                <label for="topInput" class="form-label mb-1">Top</label>
+                <input id="topInput" name="top" type="number" class="form-control form-control-sm" value="@Model.Top" min="1" max="50" style="width:100px;" />
+            </div>
+            <div>
+                <label for="dateFrom" class="form-label mb-1">From</label>
+                <input id="dateFrom" name="dateFrom" type="text" class="form-control form-control-sm" value="@Model.DateFrom.ToString("dd.MM.yyyy")" placeholder="дд.мм.гггг" style="width:140px;" autocomplete="off" />
+            </div>
+            <div>
+                <label for="dateTo" class="form-label mb-1">To</label>
+                <input id="dateTo" name="dateTo" type="text" class="form-control form-control-sm" value="@Model.DateTo.ToString("dd.MM.yyyy")" placeholder="дд.мм.гггг" style="width:140px;" autocomplete="off" />
+            </div>
+            <div>
+                <label for="priceMin" class="form-label mb-1">Price from</label>
+                <input id="priceMin" name="priceMin" type="number" class="form-control form-control-sm" style="width:130px;" />
+            </div>
+            <div>
+                <label for="priceMax" class="form-label mb-1">Price to</label>
+                <input id="priceMax" name="priceMax" type="number" class="form-control form-control-sm" style="width:130px;" />
+            </div>
+            <div>
+                <label for="districtFilter" class="form-label mb-1">District</label>
+                <select id="districtFilter" class="form-select form-select-sm" style="min-width: 180px;">
+                    <option value="">All Districts</option>
+                    @foreach (var d in Model.Districts)
+                    {
+                        <option value="@d" selected="@(d == Model.SelectedDistrict)">@d</option>
+                    }
+                </select>
+            </div>
+            <div>
+                <button id="applyBtn" class="btn btn-primary btn-sm" type="button">Apply</button>
+            </div>
+            <div id="reportError" class="text-danger small ms-2 d-none"></div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="mb-2">Chart</h5>
+                    <div id="reportData">
+                        @await Html.PartialAsync("_MostViewedApartmentsData", Model)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="mb-3">Apartments</h5>
+                    <div id="reportTable">
+                        @await Html.PartialAsync("_MostViewedApartmentsTable", Model)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ru.js"></script>
+
+    <script>
+        let viewsChartInstance = null;
+        let currentItems = [];
+
+        function setError(message) {
+            const errorEl = document.getElementById('reportError');
+            if (!errorEl) return;
+            if (!message) {
+                errorEl.classList.add('d-none');
+                errorEl.textContent = '';
+                return;
+            }
+            errorEl.textContent = message;
+            errorEl.classList.remove('d-none');
+        }
+
+        function parseRuDate(value) {
+            if (!value) return null;
+            const m = value.trim().match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+            if (!m) return null;
+            const day = Number(m[1]);
+            const month = Number(m[2]) - 1;
+            const year = Number(m[3]);
+            const d = new Date(year, month, day);
+            if (d.getFullYear() !== year || d.getMonth() !== month || d.getDate() !== day) return null;
+            return d;
+        }
+
+        function formatRuDate(date) {
+            const dd = String(date.getDate()).padStart(2, '0');
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const yyyy = date.getFullYear();
+            return `${dd}.${mm}.${yyyy}`;
+        }
+
+        function buildLabelsAndData(items) {
+            const labels = [];
+            const data = [];
+
+            for (let i = 0; i < items.length; i++) {
+                const x = items[i];
+                // Подпись на графике: только ID (без названия района)
+                let label = "ID: " + String(x.apartmentId);
+                labels.push(label);
+                data.push(x.views || 0);
+            }
+
+            return { labels, data };
+        }
+
+        function renderChartForItems(items) {
+            const canvas = document.getElementById('viewsChart');
+            if (!canvas) return;
+
+            const { labels, data } = buildLabelsAndData(items || []);
+
+            if (viewsChartInstance) {
+                viewsChartInstance.destroy();
+                viewsChartInstance = null;
+            }
+
+            viewsChartInstance = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Views',
+                        data,
+                        borderWidth: 1,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+        }
+
+        function updateDistrictFilterOptions(items) {
+            const select = document.getElementById('districtFilter');
+            if (!select) return;
+
+            // Опции районов теперь приходят с сервера (чтобы фильтр работал до Take(top)).
+            // Поэтому тут ничего не пересобираем.
+        }
+
+        function applyDistrictFilterToTable(selectedDistrict) {
+            const container = document.getElementById('reportTable');
+            if (!container) return;
+
+            const cards = container.querySelectorAll('.report-apartment-card[data-district]');
+            cards.forEach(card => {
+                const d = (card.dataset.district || '').trim();
+                if (!selectedDistrict || d === selectedDistrict) {
+                    card.classList.remove('d-none');
+                } else {
+                    card.classList.add('d-none');
+                }
+            });
+        }
+
+        function renderChartFromJsonText(jsonText) {
+            const canvas = document.getElementById('viewsChart');
+            if (!canvas || !jsonText) return;
+
+            let payload;
+            try {
+                payload = JSON.parse(jsonText);
+            } catch {
+                return;
+            }
+
+            currentItems = payload.items || [];
+
+            const select = document.getElementById('districtFilter');
+            const selected = select ? (select.value || '') : '';
+            renderChartForItems(currentItems);
+            applyDistrictFilterToTable(selected);
+        }
+
+        function updatePeriodLabel(top, fromText, toText) {
+            const periodEl = document.getElementById('reportPeriod');
+            if (!periodEl) return;
+            periodEl.textContent = `Топ ${top} по просмотрам (с ${fromText} по ${toText})`;
+        }
+
+        async function reloadReport() {
+            setError('');
+
+            const topEl = document.getElementById('topInput');
+            const dfEl = document.getElementById('dateFrom');
+            const dtEl = document.getElementById('dateTo');
+            const priceMinEl = document.getElementById('priceMin');
+            const priceMaxEl = document.getElementById('priceMax');
+
+            const topValue = Number(topEl?.value || 5);
+            const top = Number.isFinite(topValue) ? Math.min(50, Math.max(1, topValue)) : 5;
+            if (topEl) topEl.value = String(top);
+
+            const fromText = (dfEl?.value || '').trim();
+            const toText = (dtEl?.value || '').trim();
+            const fromDate = parseRuDate(fromText);
+            const toDate = parseRuDate(toText);
+
+            if (!fromDate || !toDate) {
+                setError('Введите даты в формате dd.MM.yyyy.');
+                return;
+            }
+
+            if (fromDate > toDate) {
+                setError('Дата "От" не может быть больше даты "До".');
+                return;
+            }
+
+            const priceMin = priceMinEl?.value ? Number(priceMinEl.value) : null;
+            const priceMax = priceMaxEl?.value ? Number(priceMaxEl.value) : null;
+            const district = (document.getElementById('districtFilter')?.value || '').trim();
+
+            const params = new URLSearchParams();
+            params.set('top', String(top));
+            params.set('dateFrom', fromText);
+            params.set('dateTo', toText);
+            if (priceMin !== null && !Number.isNaN(priceMin)) {
+                params.set('priceMin', String(priceMin));
+            }
+            if (priceMax !== null && !Number.isNaN(priceMax)) {
+                params.set('priceMax', String(priceMax));
+            }
+            if (district) {
+                params.set('district', district);
+            }
+
+            const url = `/Report/MostViewedApartmentsData?${params.toString()}`;
+            const resp = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            if (!resp.ok) {
+                setError('Не удалось загрузить данные отчёта.');
+                return;
+            }
+
+            const html = await resp.text();
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+
+            const chartBlock = temp.querySelector('#chartBlock');
+            const jsonBlock = temp.querySelector('#jsonBlock');
+            const tableBlock = temp.querySelector('#tableBlock');
+
+            if (!chartBlock || !jsonBlock || !tableBlock) {
+                setError('Получен некорректный ответ сервера.');
+                return;
+            }
+
+            const reportData = document.getElementById('reportData');
+            const reportTable = document.getElementById('reportTable');
+            if (!reportData || !reportTable) {
+                setError('Не удалось обновить данные на странице.');
+                return;
+            }
+
+            reportData.innerHTML = chartBlock.outerHTML + jsonBlock.outerHTML;
+            reportTable.innerHTML = tableBlock.innerHTML;
+
+            updatePeriodLabel(top, fromText, toText);
+            renderChartFromJsonText(document.getElementById('jsonBlock')?.textContent?.trim() || '');
+        }
+
+        const applyBtn = document.getElementById('applyBtn');
+        if (applyBtn) applyBtn.addEventListener('click', reloadReport);
+
+        const districtSelect = document.getElementById('districtFilter');
+        if (districtSelect) {
+            districtSelect.addEventListener('change', function () {
+                // Теперь район — серверный фильтр. Перезагружаем блоки отчёта (без перезагрузки страницы).
+                reloadReport();
+            });
+        }
+
+        flatpickr("#dateFrom", {
+            dateFormat: "d.m.Y",
+            allowInput: true,
+            disableMobile: true,
+            locale: (window.flatpickr && window.flatpickr.l10ns && window.flatpickr.l10ns.ru) ? window.flatpickr.l10ns.ru : undefined
+        });
+
+        flatpickr("#dateTo", {
+            dateFormat: "d.m.Y",
+            allowInput: true,
+            disableMobile: true,
+            locale: (window.flatpickr && window.flatpickr.l10ns && window.flatpickr.l10ns.ru) ? window.flatpickr.l10ns.ru : undefined
+        });
+
+        renderChartFromJsonText(document.getElementById('jsonBlock')?.textContent?.trim() || '');
+    </script>
+}

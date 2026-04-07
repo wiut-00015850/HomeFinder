@@ -1,0 +1,50 @@
+@model HomeFinder.Models.Reports.MostViewedApartmentsReportVm
+
+<div class="row row-cols-1 row-cols-md-2 g-2">
+    @foreach (var x in Model.Items)
+    {
+        var addr = $"{x.City}, {x.District}, {x.StreetAddress} {x.BuildingNumber}"
+            .Replace(" ,", ",")
+            .Trim(' ', ',');
+
+        <div class="col">
+            <div class="card h-100 shadow-sm report-apartment-card" data-district="@x.District">
+                <a href="@Url.Action("Details", "Apartments", new { id = x.ApartmentId })"
+                   class="text-decoration-none text-reset d-flex flex-column h-100">
+                    @if (!string.IsNullOrWhiteSpace(x.PhotoPath))
+                    {
+                        <img src="@Url.Content(x.PhotoPath)"
+                             class="card-img-top"
+                             style="width: 100%; aspect-ratio: 1 / 1; object-fit: cover;"
+                             alt="Apartment photo" />
+                    }
+                    else
+                    {
+                        <div class="bg-secondary text-white d-flex align-items-center justify-content-center"
+                             style="width: 100%; aspect-ratio: 1 / 1; font-size: 0.8rem;">
+                            No photo
+                        </div>
+                    }
+
+                    <div class="card-body py-2 px-3 d-flex flex-column">
+                        <div class="fw-semibold small mb-1">
+                            @(string.IsNullOrWhiteSpace(addr) ? "Квартира #"+x.ApartmentId : addr)
+                        </div>
+                        <div class="text-muted small mb-1">
+                            ID: @x.ApartmentId
+                        </div>
+                        <div class="text-muted small mb-1">
+                            @if (x.Price.HasValue)
+                            {
+                                @($"{x.Price.Value:F0} UZS")
+                            }
+                        </div>
+                        <div class="small fw-semibold mt-auto">
+                            Views: @x.Views
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    }
+</div>

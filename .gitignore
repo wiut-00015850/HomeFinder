@@ -1,0 +1,10 @@
+obj/
+.vs/
+bin/
+HomeFinder/obj
+HomeFinder/bin
+HomeFinder/.vs
+HomeFinder/SeedApartmentViewLogs.sql
+HomeFinder/CreateApartmentViewLogTable.sql
+/HomeFinder.Frontend/node_modules
+HomeFinder/appsettings.json
